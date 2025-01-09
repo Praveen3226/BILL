@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Course Enrollment Form</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+    }
+    table, th, td {
+      border:1px solid black;
+    }
+    
+    .invoice-box {
+        width: 70%;
+        padding: 20px;
+        border: 1px solid #eee;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+    }
+    .header {
+        text-align: center;
+        font-size: 25px;
+        font-weight: bold;
+        color: brown;
+    }
+    .sub-header {
+        text-align: center;
+        font-size: 10px;
+        margin-top: 5px;
+    }
+    .logo {
+        width: 100px;
+    }
+    .header-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+</style>
+
+<body>
+    <div class="invoice-box">
+        <!-- Header with logo, address, and invoice details -->
+        <div class="header-section">
+            <img src="{{ url_for('static', filename='logo.png') }}" class="logo" alt="EduCADD Logo">
+            <div>
+                <div class="header">EduCADD Centre</div>
+                <div class="sub-header">No. 1230/50, 2nd Floor, 9th Main Road, Vijayanagara, Bengaluru – 560040</div>
+                <div class="sub-header">2341, 3rd phase, KHB, Yelahanka New Town, Bengaluru, Karnataka 560064</div>
+                <div class="sub-header">Owned & Managed by Firm:Bitsmart</div>
+            </div>
+        </div>
+
+        <h2>Course Enrollment Form</h2>
+        <form action="/invoice" method="post" id="invoice-form">
+            <label>Full Name:</label><br>
+            <input type="text" name="name" required><br><br>
+
+            <label>Mobile Number:</label><br>
+            <input type="tel" name="mobile" required><br><br>
+
+            <label>Address:</label><br>
+            <textarea name="address" required></textarea><br><br>
+
+            <label>Course Category:</label><br>
+            <select name="category" id="category" required>
+                <option value="">Select Category</option>
+                {% for category, courses in categories.items() %}
+                    <option value="{{ category }}">{{ category.capitalize() }}</option>
+                {% endfor %}
+            </select><br><br>
+
+            <label>Courses Opted:</label><br>
+            <div id="courses-list"></div><br>
+
+            <label>Total Price:</label>
+            <span id="total-price">₹0</span><br><br>
+
+            <label>Discount:</label><br>
+            <input type="number" name="discount" id="discount" value="0"><br><br>
+
+            <label>Final Price:</label>
+            <span id="final-price">₹0</span><br><br>
+
+
+
+            <input type="hidden" id="selected-courses" name="selected_courses">
+            <input type="hidden" id="total-amount" name="total_amount">
+
+            <label>Number of Installments:</label><br>
+        <input type="number" name="installments" id="installments" min="1" value="1"><br><br>
+        
+        <input type="hidden" id="selected-courses" name="selected_courses">
+        <input type="hidden" id="total-amount" name="total_amount">
+
+        <div id="installment-section"></div>
+
+            <button type="submit">Generate Invoice</button>
+        </form>
+    </div>
+
+    <script>
+     $(document).ready(function() {
+    $('#category').change(function() {
+        var category = $(this).val();
+        var courses = {{ categories | tojson | safe }};
+        var coursesHtml = '';
+        $('#courses-list').html(''); // Clear previous courses
+
+        if (category && courses[category]) {
+            $.each(courses[category], function(i, course) {
+                coursesHtml += `<input type="checkbox" class="course-checkbox" 
+                    value="${course[0]}" 
+                    data-price="${course[1]}"> ${course[0]} - ₹${course[1]}<br>`;
+            });
+        }
+
+        $('#courses-list').html(coursesHtml);
+    });
+
+    // Updating total price and final price on course selection
+    $(document).on('change', '.course-checkbox', function() {
+        updateTotalPrice();
+    });
+
+    $('#discount').on('input', function() {
+        updateTotalPrice();
+    });
+
+    $('#installments').change(function() {
+        updateInstallmentSection();
+    });
+
+    function updateTotalPrice() {
+        let totalPrice = 0;
+        let selectedCourses = [];
+
+        $('.course-checkbox:checked').each(function() {
+            totalPrice += parseInt($(this).data('price'));
+            selectedCourses.push($(this).val());
+        });
+
+        $('#total-price').text('₹' + totalPrice);
+        
+        let discount = parseInt($('#discount').val()) || 0;
+        let finalPrice = totalPrice - (totalPrice * discount / 100);
+        
+        $('#final-price').text('₹' + finalPrice.toFixed(2));
+        $('#total-amount').val(finalPrice.toFixed(2));
+        $('#selected-courses').val(selectedCourses.join(", "));
+
+        updateInstallmentSection();
+    }
+
+    function updateInstallmentSection() {
+        const numInstallments = parseInt($('#installments').val()) || 1;
+        const finalAmount = parseFloat($('#total-amount').val()) || 0;
+        const installmentAmount = finalAmount / numInstallments;
+        $('#installment-section').html('');
+
+        if (numInstallments > 1) {
+            let installmentHtml = '<h3>Installment Details</h3>';
+            for (let i = 1; i <= numInstallments; i++) {
+                installmentHtml += `
+                    <label>Installment ${i} Amount:</label><br>
+                    <input type="number" value="${installmentAmount.toFixed(2)}" name="installment_amount_${i}" required><br><br>
+                    <label>Installment ${i} Due Date:</label><br>
+                    <input type="date" name="installment_date_${i}" required><br><br>
+                    <label>Installment ${i} Status:</label><br>
+                    <select name="installment_status_${i}">
+                        <option value="Pending">Pending</option>
+                        <option value="Paid">Paid</option>
+                    </select><br><br>
+                `;
+            }
+            $('#installment-section').html(installmentHtml);
+        }
+    }
+});
+
+
+    </script>
+</body>
+</html>

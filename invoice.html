@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+    }
+    .invoice-box {
+        width: 70%;
+        padding: 20px;
+        border: 1px solid #eee;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+    }
+    .header {
+        text-align: center;
+        font-size: 25px;
+        font-weight: bold;
+        color: brown;
+    }
+    .sub-header {
+        text-align: center;
+        font-size: 10px;
+        margin-top: 5px;
+    }
+    .logo {
+        width: 100px;
+    }
+    .header-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .invoice-details {
+        text-align: right;
+        font-size: 10px;
+    }
+    .section-title {
+        font-size: 14px;
+        margin-top: 15px;
+        font-weight: bold;
+    }
+    .terms {
+        font-size: 10px;
+        margin-top: 20px;
+        line-height: 1.6;
+    }
+    .signature-section {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 30px;
+    }
+    .authorized-signature {
+        text-align: center;
+        font-weight: bold;
+    }
+    .smiley-tick {
+        text-align: center;
+        font-weight: bold;
+        color: green;
+    }
+    table, th, td {
+      border:1px solid black;
+    }
+    .footer {
+        margin-top: 50px;
+        display: flex;
+        justify-content: flex-start;
+        align-items: flex-end;
+    }
+    .footer .signature-section {
+        margin-right: 50px;
+    }
+    .footer .seal-space {
+        flex: 1;
+        text-align: center;
+        font-weight: bold;
+    }
+</style>
+</head>
+
+<body>
+    <div class="invoice-box">
+        <!-- Header with logo, address, and invoice details -->
+        <div class="header-section">
+            <img src="{{ url_for('static', filename='logo.png') }}" class="logo" alt="EduCADD Logo">
+            <div>
+                <div class="header">EduCADD Centre</div>
+                <div class="sub-header">No. 1230/50, 2nd Floor, 9th Main Road, Vijayanagara, Bengaluru – 560040</div>
+                <div class="sub-header">2341, 3rd phase, KHB, Yelahanka New Town, Bengaluru, Karnataka 560064</div>
+                <div class="sub-header">Owned & Managed by Firm:Bitsmart</div>
+            </div>
+            <div class="invoice-details">
+                <p>Invoice Number: {{ invoice_number }}</p>
+                <p>Date: {{ invoice_date }}</p>
+            </div>
+        </div>
+
+        <!-- Customer and Course Details -->
+        <div class="section-title">Student Details</div>
+        <table style="width:100%">
+          <tr>
+            <th><strong>Name:</strong></th>
+            <th>Mobile Number:</strong></th>
+            <th><strong>Address:</strong></th>
+          </tr>
+         <tr>
+            <td>{{ name }}</td>
+            <td>{{ mobile }}</td>
+            <td>{{ address }}</td>
+          </tr>
+        </table>
+        
+        <div class="section-title">Course Information</div>
+        <table style="width:100%">
+          <tr>
+            <th><strong>Course Category:</strong></th>
+            <th>{{ category }}</strong></th>
+          </tr>
+        </table>
+        
+        <h3>Selected Courses:</h3>
+        <table style="width:100%">
+            <thead>
+                <tr>
+                    <th>Course Name</th>
+                    <th>Price (₹)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for course_name, course_price in selected_courses %}
+                <tr>
+                    <td>{{ course_name }}</td>
+                    <td>₹{{ course_price }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table><br><br><br>       
+        
+        
+        <table style="width:100%">
+          <tr>
+            <td><strong>Total Price:</strong></td>
+            <td>₹{{ total_amount}}</td>
+        </tr>
+          <tr>
+            <td><strong>Discount:</strong></td>
+            <td>{{ discount }} %</td>
+        </tr>
+          <tr>
+            <td><strong>Offered Price:</strong></td>
+            <td>₹{{final_amount }}</td>
+        </tr>
+          <tr>
+            <td><strong>Offered Price in Words:</strong></td>
+            <td>{{ final_price_words }} rupees only</td>
+        </tr>
+        </table>
+        
+    
+        <tbody>
+            {% if installments > 1 %}
+                <div class="section-title">Installment Details</div>
+                    <table style="width:100%">
+                        <thead>
+                            <tr>
+                                <th>Installment No.</th>
+                                <th>Amount (₹)</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                    <tbody>
+                        {% for installment in installment_details %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>₹{{ installment.amount }}</td>
+                            <td>{{ installment.date }}</td>
+                            <td>{{ installment.status }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    </table>
+            {% endif %}
+        </tbody>
+
+
+        <!-- Terms and Conditions -->
+        <div class="section-title">Terms and Conditions</div>
+        <div class="terms">
+            <p>1. Two Passport size photographs must be submitted at the time of registration.
+            2. In case of installment, a minimum of 60% of the total fee must be paid as the first installment.
+            3. If payment of the fee is made by cheque in advance before joining the course and the cheque is dishonored by the bank, a handling charge of Rs. 200/- along with the bank charges for the returned cheque will be collected from the student.
+            4. Failure to pay installments on due dates will attract a fine of Rs. 200/- or a revision of the course fee.
+            5. The student should strictly adhere to the batch timings specified by the center.
+            6. The student is expected to follow all rules and regulations within the center.
+            7. Fees once paid are non-refundable. Once the receipt is generated, it signifies that the customer agrees with all the above terms and conditions.</p>
+        </div>
+
+        <!-- Footer with Signature and Seal -->
+        <div class="footer">
+            <div class="signature-section">
+                <p><strong>Mb:</strong></p>
+                <br><br> <!-- Space for signature -->
+                <p>+91-9945015018</p>
+            </div>
+            <div class="seal-space">
+                <p>www.educaddcentre.com</p>
+            </div>
+            <div class="received-section">
+                <p>Received by:</p>
+                <br><br> <!-- Space for received by text -->
+                <p><strong>Bitsmart</strong></p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
