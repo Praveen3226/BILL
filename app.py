@@ -1,3 +1,4 @@
+import os
 from flask import Flask, render_template, request, jsonify
 from decimal import Decimal
 from datetime import datetime
@@ -114,4 +115,6 @@ def generate_invoice():
                            invoice_date=invoice_date)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Use PORT from environment variable for Render compatibility
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
